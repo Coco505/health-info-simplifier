@@ -1,4 +1,4 @@
-const apiKey = process.env.OPENROUTER_API_KEY; // set this in Vercel
+const apiKey = process.env.API_KEY; // set this in Vercel
 
 export async function simplifyText(
   text: string,
@@ -6,7 +6,7 @@ export async function simplifyText(
   useBullets: boolean,
   targetLanguage: string = "Original"
 ) {
-  if (!apiKey) throw new Error("OPENROUTER_API_KEY is missing!");
+  if (!apiKey) throw new Error("API_KEY is missing!");
 
   const formattingInstruction = useBullets
     ? "3. Organize information using clear bullet points where appropriate to improve readability."
