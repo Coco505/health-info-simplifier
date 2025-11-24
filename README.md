@@ -2,7 +2,7 @@
 
 > AI-powered tool to transform complex medical text into simple, clear, patient-friendly language with multi-language translation support.
 
-**🔗 Live App:** [https://health-info-simplifier.vercel.app/]([https://your-deployed-app.vercel.app](https://health-info-simplifier.vercel.app/))
+**🔗 Live App:** [https://health-info-simplifier.vercel.app/](https://health-info-simplifier.vercel.app/)
 
 ## Overview
 
