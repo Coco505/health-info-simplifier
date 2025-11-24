@@ -1,0 +1,5 @@
+{
+  "name": "HealthInfoSimplifier",
+  "description": "A tool to simplify complex health information and patient education materials using AI.",
+  "requestFramePermissions": []
+}
