@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
-  ArrowRight, 
   Sparkles, 
   BookOpen, 
   Activity, 
   Type, 
-  Upload, 
   Feather, 
   Info, 
   AlertTriangle, 
@@ -39,8 +37,6 @@ const initialMetrics: ReadabilityMetrics = {
 };
 
 const SAMPLE_TEXT = `Hypertension, also known as high blood pressure, is a long-term medical condition in which the blood pressure in the arteries is persistently elevated. High blood pressure usually does not cause symptoms. Long-term high blood pressure, however, is a major risk factor for coronary artery disease, stroke, heart failure, atrial fibrillation, peripheral arterial disease, vision loss, and chronic kidney disease.`;
-
-const MAX_CHARS = 2500;
 
 const LANGUAGES = [
   "Spanish",
@@ -114,32 +110,9 @@ export default function App() {
     }
   }, [simplifiedText]);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result;
-        if (typeof text === 'string') {
-          if (text.length > MAX_CHARS) {
-            setError(`File too large. Please limit to ${MAX_CHARS} characters.`);
-            setInputText(text.slice(0, MAX_CHARS));
-          } else {
-            setInputText(text);
-            setError(null);
-          }
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    if (text.length <= MAX_CHARS) {
-      setInputText(text);
-      setError(null);
-    }
+    setInputText(e.target.value);
+    setError(null);
   };
 
   const addToHistory = (original: string, simplified: string, inMet: ReadabilityMetrics, outMet: ReadabilityMetrics, lang: string) => {
@@ -155,9 +128,12 @@ export default function App() {
     setHistory(prev => [newItem, ...prev]);
   };
 
-  const processText = async (instruction: string, lang: string = 'Original') => {
-    if (!inputText.trim()) {
-      setError("Please enter some text or upload a file first.");
+ const processText = async (instruction: string, lang: string = 'Original', sourceText?: string) => {
+    // Use provided sourceText or default to inputText
+    const textToProcess = sourceText || inputText;
+    
+    if (!textToProcess.trim()) {
+      setError("Please enter some text first.");
       return;
     }
     
@@ -166,13 +142,13 @@ export default function App() {
     setIsCopied(false);
 
     try {
-      const result = await simplifyText(inputText, instruction, useBullets, lang);
+      const result = await simplifyText(textToProcess, instruction, useBullets, lang);
       setSimplifiedText(result);
       setCurrentResultLang(lang);
 
       // We need to calculate metrics for the new result immediately to save to history correctly
       const resultMetrics = calculateReadability(result);
-      addToHistory(inputText, result, inputMetrics, resultMetrics, lang);
+      addToHistory(textToProcess, result, calculateReadability(textToProcess), resultMetrics, lang);
 
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -192,11 +168,21 @@ export default function App() {
   };
 
   const handleMakeSimpler = () => {
-    processText("Simplify this text further to a Grade 4 reading level. Use very basic vocabulary and very short sentences. Explain complex terms simply.", currentResultLang);
+    // Process the CURRENT simplified text, not the original input
+    processText(
+      "Simplify this text further to a Grade 4 reading level. Use very basic vocabulary and very short sentences. Explain complex terms simply.", 
+      currentResultLang,
+      simplifiedText  // Pass the current simplified text as source
+    );
   };
 
   const handleMakeComplex = () => {
-    processText("Rewrite this text to a Grade 9-10 level. Maintain professional medical terminology but ensure it is clearly explained. Provide more detail.", currentResultLang);
+    // Process the CURRENT simplified text, not the original input
+    processText(
+      "Rewrite this text to a Grade 9-10 level. Maintain professional medical terminology but ensure it is clearly explained. Provide more detail.", 
+      currentResultLang,
+      simplifiedText  // Pass the current simplified text as source
+    );
   };
 
   const handleCopy = async () => {
@@ -300,15 +286,6 @@ export default function App() {
                   >
                     Load Sample
                   </button>
-                  <span className="text-slate-300">|</span>
-                  <div className="flex flex-col items-end">
-                    <label className="cursor-pointer inline-flex items-center px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">
-                      <Upload className="w-3 h-3 mr-2" />
-                      Upload File
-                      <input type="file" className="hidden" accept=".txt,.md" onChange={handleFileUpload} />
-                    </label>
-                    <span className="text-[10px] text-slate-400 mt-0.5">Supported formats: .txt, .md</span>
-                  </div>
                 </div>
               </div>
 
@@ -326,10 +303,9 @@ export default function App() {
                     placeholder="Paste your patient education text here..."
                     value={inputText}
                     onChange={handleTextChange}
-                    maxLength={MAX_CHARS}
                   />
-                  <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-md text-xs font-medium border ${inputText.length >= MAX_CHARS ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white/80 text-slate-500 border-slate-200'} backdrop-blur-sm`}>
-                    {inputText.length} / {MAX_CHARS}
+                  <div className="absolute bottom-3 right-3 px-2 py-1 rounded-md text-xs font-medium bg-white/80 text-slate-500 border border-slate-200 backdrop-blur-sm">
+                    {inputText.length} characters
                   </div>
                 </div>
 
@@ -422,7 +398,7 @@ export default function App() {
 
           {/* RIGHT COLUMN: Output & Analytics */}
           <div className="space-y-6">
-             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full min-h-[500px]">
+             <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col ${!simplifiedText ? 'min-h-[500px]' : ''}`}>
                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <h3 className="text-md font-bold flex items-center text-slate-800">
                     <BookOpen className="w-4 h-4 mr-2 text-teal-600" />
@@ -462,7 +438,7 @@ export default function App() {
                     <>
                       <textarea
                         readOnly
-                        className="w-full flex-1 p-6 resize-none text-slate-900 leading-relaxed text-base focus:outline-none bg-white font-medium"
+                        className="w-full h-96 p-6 resize-none text-slate-900 leading-relaxed text-base focus:outline-none bg-white font-medium"
                         value={simplifiedText}
                       />
                       

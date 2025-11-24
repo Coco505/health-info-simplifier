@@ -32,36 +32,37 @@ export async function simplifyText(
     6. Do NOT use markdown bolding (do not use double asterisks **).
     7. Ensure the tone is empathetic but professional.
     8. ${languageInstruction}
+    9. Do NOT add advice, conclusions, summaries, or new facts. Use ONLY the exact information that appears in the original text. If something is not explicitly written in the original text, do NOT include it.”
 
     Original Text:
     "${text}"
   `;
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      "model": "google/gemma-3-27b-it:free",
-      "messages":[
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": prompt,
-            },
-          ],
-        },
-      ]
-    }),
-  });
+try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemma-3-27b-it:free",
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
 
-  const data = await response.json();
-  console.log("OpenRouter response:", data); // Debugging to see exact output
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenRouter API Error:", response.status, errorText);
+      throw new Error(`API request failed: ${response.status}`);
+    }
 
-  // Gemma 3.27B text is under data.choices[0].message.content[0].text
-  return data?.choices?.[0]?.message?.content?.[0]?.text || "Could not generate a response.";
+    const data = await response.json();
+    console.log("API Response:", data); // Debug log
+    
+    return data?.choices?.[0]?.message?.content || "Could not generate a response.";
+  } catch (error) {
+    console.error("Error in simplifyText:", error);
+    throw error;
+  }
 }
