@@ -45,11 +45,13 @@ export async function simplifyText(
     },
     body: JSON.stringify({
       model: "gemma-3-27b",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1000,
+      input: prompt,          // <-- changed from 'messages' to 'input'
+      max_output_tokens: 1000 // <-- updated to match OpenRouter docs
     }),
   });
 
   const data = await response.json();
-  return data?.choices?.[0]?.message?.content || "Could not generate a response.";
+
+  // OpenRouter may return 'output_text' instead of nested choices
+  return data?.output_text || "Could not generate a response.";
 }
