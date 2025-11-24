@@ -1,7 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// flexible check for API key from different sources
+const apiKey = process.env.API_KEY || import.meta.env.VITE_API_KEY || '';
+
+let ai: GoogleGenAI | null = null;
+if (apiKey) {
+  ai = new GoogleGenAI({ apiKey });
+}
 
 export async function simplifyText(
   text: string, 
@@ -9,8 +14,8 @@ export async function simplifyText(
   useBullets: boolean,
   targetLanguage: string = 'Original'
 ): Promise<string> {
-  if (!apiKey) {
-    throw new Error("API Key is missing. Please check your environment configuration.");
+  if (!apiKey || !ai) {
+    throw new Error("API Key is missing. Please add API_KEY to your Vercel Environment Variables and redeploy.");
   }
 
   // Construct formatting instruction based on user preference
@@ -51,6 +56,6 @@ export async function simplifyText(
     return response.text || "Could not generate a response.";
   } catch (error) {
     console.error("Error calling Gemini API:", error);
-    throw new Error("Failed to simplify text. Please try again.");
+    throw new Error("Failed to simplify text. Please check your API key and quota.");
   }
 }
