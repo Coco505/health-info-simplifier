@@ -49,7 +49,7 @@ export async function simplifyText(
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemma-2-27b-it',
+      model: 'gemma-3-27b-it',
       contents: prompt,
     });
     
