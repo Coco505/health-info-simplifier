@@ -50,7 +50,7 @@ export async function simplifyText(
         'X-Title': 'Health Text Simplifier'
       },
       body: JSON.stringify({
-        model: 'google/gemma-2-27b-it:free',
+        model: 'google/gemma-3-27b-it:free',
         messages: [
           {
             role: 'user',
