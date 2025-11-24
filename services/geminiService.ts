@@ -37,21 +37,31 @@ export async function simplifyText(
     "${text}"
   `;
 
-  const response = await fetch("https://openrouter.ai/api/v1/completions", {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: "gemma-3-27b",
-      input: prompt,          // <-- changed from 'messages' to 'input'
-      max_output_tokens: 1000 // <-- updated to match OpenRouter docs
+      "model": "google/gemma-3-27b-it:free",
+      "messages":[
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": prompt,
+            },
+          ],
+        },
+      ]
     }),
   });
 
   const data = await response.json();
+  console.log("OpenRouter response:", data); // Debugging to see exact output
 
-  // OpenRouter may return 'output_text' instead of nested choices
-  return data?.output_text || "Could not generate a response.";
+  // Gemma 3.27B text is under data.choices[0].message.content[0].text
+  return data?.choices?.[0]?.message?.content?.[0]?.text || "Could not generate a response.";
 }
